@@ -1,5 +1,0 @@
-Installed {{ .Chart.Name }} chart version {{ .Chart.Version }}.
-The release is named {{ .Release.Name }}.
-
-helm-common labels:
-{{- include "helm-common.labels" . | nindent 2 }}

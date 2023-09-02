@@ -31,7 +31,7 @@ module "main" {
 ## https://www.stacksimplify.com/aws-eks/aws-alb-ingress/learn-to-enable-ssl-on-alb-ingress-service-in-kubernetes-on-aws-eks/
   ingress_ssl = {
     enabled         = true
-    certificate_arn = "arn:aws:acm:eu-west-1:268933712607:certificate/f167404b-9000-45cb-9b9d-5fd9514fb77f"
+    certificate_arn = "arn:aws:acm:eu-west-1:ACCOUNT:certificate/CERTID"
     listen_ports    = [
       { HTTP  = 80 },
       { HTTPS = 443 },

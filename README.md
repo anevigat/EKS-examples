@@ -1,26 +1,10 @@
-# EKS and Helm examples
-
-**IMPORTANT:** Contents on this repo are just examples and are not meant to be executed directly.
-
-This repo contains the terraform manifests to:
-- Deploy and configure EKS.
-- Create and configure namespaces
-- Create ECR repositories
-
-This repo also contains Helm chart examples to deploy common applications.
-
-Each folder contains a README with aditional usage instructions.
-
-
-
-
-
-
-
-# Deploy a Cluster
+# Kubernetes_config
 
 ## Intro
-This **multibranch** repo contains the configuration files to deploy and configure an EKS Kubernetes cluster
+This **multibranch** repo contains the configuration files to deploy and configure Kubernete on-cloud
+
+## Available cloud providers
+- EKS on AWS
 
 ## Create a kubernetes cluster
 

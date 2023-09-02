@@ -9,7 +9,7 @@
 ### https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html
 
 ## Type: Number
-# Optional - Default 1.27
+# Optional - Default 1.23
 #cluster_version = ""
 
 

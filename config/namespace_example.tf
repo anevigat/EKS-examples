@@ -15,7 +15,7 @@
 #}
 
 
-## Full configuration with network policies, ingress and Istio ##
+## Full configuration with network policies and ingress ##
 #module "<NAMESPACE_NAME>" {
 #  source = "./modules/kubernetes_config"
 #  name   = "<NAMESPACE_NAME>"
@@ -23,7 +23,6 @@
 ##  env    = "test" ## Optional - Default: "prod"
 ##  role_read_write = true ## Optional - Default: false
 
-## Network Policies
 ## Optional - Default: {} - Type: map of objects - Add as many blocks as needed
 #  network_policies_ingress = {
 #    <SERVICE_NAME> = {
@@ -33,46 +32,39 @@
 #      protocol = "<PROTOCOL>"
 #    },
 #  }
-
-## Enable Ingress
-## Optional - Default: null - Type: list of maps
-## https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.3/guide/tasks/ssl_redirect/
-## https://www.stacksimplify.com/aws-eks/aws-alb-ingress/learn-to-enable-ssl-on-alb-ingress-service-in-kubernetes-on-aws-eks/
+#
+## Optional - Default: null - Type: map
 #  ingress_ssl = {
 #    enabled         = true
-#    certificate_arn = "arn:aws:acm:eu-west-1:268933712607:certificate/f167404b-9000-45cb-9b9d-5fd9514fb77f"
+#    certificate_arn = "arn:aws:acm:eu-west-1:268933712607:certificate/612c14be-9692-481c-b576-2ad6260d10ba"
 #    listen_ports    = [
-#      { HTTP  = 80 },
-#      { HTTPS = 443 },
-#      { HTTPS = 4443 }
+#      { HTTPS = 443 }
 #    ]
 #    ssl_redirect    = "443"
 #    ssl_policy      = "ELBSecurityPolicy-FS-1-2-Res-2020-10"
 #  }
-
-## Add Ingress rules
+#
 ## Optional - Default: null - Type: list of maps - Add as many blocks as needed
 #  ingress_rules = {
-#    <DOMAIN_NAME> = {
-#      proxied = false/true
+#    <DNS_HOST>-<ENV> = {
+#      proxied = true # If true requests will be proxied through Cloudflare
 #      paths   = [
 #        {
-#          service_name = "<SERVICE_NAME>",
+#          service_name = "<SERVICE_NAME>-ENV",
 #          service_port = "<SERVICE_PORT>",
 #          path         = "<PATH>"
 #        }
 #      ]
 #    }
 #  }
-#}
-
-## Istio External services
+#
 ## Optional - Default: null - Type: list of maps - Add as many blocks as needed
-#  external_services = {
-#    <SERVICE_NAME> = {
-#      host = "www.google.es"
-#      protocol = "https"
-#      port = 443
-#    }
-#  }
+#   rate_limit_rules = [
+#     {
+#       url_pattern = "nexudus-listener-test..digital/api/v1/wifi",
+#       threshold   = "10", # number of requests per period
+#       period      = "60", # number of seconds
+#       timeout     = "60"  # number of seconds
+#     }
+#   ]
 #}
