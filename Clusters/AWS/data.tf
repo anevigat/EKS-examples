@@ -7,3 +7,7 @@ data "aws_eks_cluster_auth" "cluster" {
 }
 
 data "aws_caller_identity" "current" {}
+
+data "aws_ssm_parameter" "latest_ami_release_version" {
+   name     = "/aws/service/eks/optimized-ami/${var.cluster_version}/amazon-linux-2/recommended/image_id"
+}
