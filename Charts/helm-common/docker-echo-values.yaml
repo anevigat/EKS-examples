@@ -1,0 +1,14 @@
+global:
+  env: test
+  namespace: test
+
+app: echo
+image:
+  repository: mendhak
+  name: http-https-echo
+  tag: 30
+replicaCount: 2
+service:
+  port: 8888
+variables:
+  HTTP_PORT: "8888"
