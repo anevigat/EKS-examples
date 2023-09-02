@@ -1,0 +1,166 @@
+# -- Name of the component.
+app: ""
+# -- Environment.
+# Use "test" or "main"
+env: test
+# -- Replace the name of the resources.
+# Will not include the name of the service
+fullnameOverride: ""
+# -- Namespace to install the release
+namespace: ""
+
+
+# -- Name of the 1password vault without the environment.
+onepassword:
+  vault: ""
+
+# -- 1Password component secrets item to create Kubernetes secrets.
+secrets: {}
+  # name: app_test
+  # values:
+  #   - EC_HOST
+  #   - EC_USER
+  #   - EC_PASS
+
+# -- Environmental variables to attach to deployments.
+# Supports using Helm variables
+variables: {}
+  # ec_host: "elastic_{{ .Values.env }}_host"
+  # ec_user: calculator
+
+# -- Environmental variables to attach to deployments.
+# Do not support Helm variables.
+flags: {}
+  # - name: HTTP_BASIC_ENABLE
+  #   value: "false"
+  # - name: LISTENER_VALIDATE_EVENTS_ENABLE
+  #   value: "false"
+
+serviceAccount:
+  # -- Enable creating a Kubernetes service account resource.
+  create: true
+  # -- Service Account annotations.
+  annotations: {}
+
+service:
+  # -- Enable creating a Kubernetes service resource.
+  create: true
+  # -- Port name.
+  name: http
+  # -- Port protocol.
+  protocol: TCP
+  # -- Port type.
+  type: ClusterIP
+  # -- Port number.
+  port: 3000
+
+# -- Number of replicas for the deployment.
+replicaCount: 1
+
+image:
+  # -- Images Pull policy.
+  pullPolicy: Always
+  # -- Images repository.
+  repository: ""
+  # -- Image tag.
+  tag: latest
+  # -- Image name.
+  name: ""
+
+deployment:
+  # -- Set the deployment type: deployment, statefulset, cronjob
+  type: deployment
+
+# -- Values for cronjobs deployment types.
+cronjobs:
+  # -- Default value for successfulJobsHistoryLimit.
+  successfulJobsHistoryLimit: 1
+  # -- Default value for failedJobsHistoryLimit.
+  failedJobsHistoryLimit: 1
+  # -- Default value for ttlSecondsAfterFinished.
+  ttlSecondsAfterFinished: 60
+  # -- Default value for backoffLimit.
+  backoffLimit: 0
+  # -- Default value for terminationGracePeriodSeconds.
+  terminationGracePeriodSeconds: 60
+  # -- Default value for restartPolicy.
+  restartPolicy: Never
+  # -- Default value for activeDeadlineSeconds.
+  activeDeadlineSeconds: ""
+
+# -- Pod resources.
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+# -- Pod annotations.
+podAnnotations: {}
+
+podDisruptionBudget:
+  # -- Pod disruption budget min available.
+  minAvailable: 1
+
+# -- Pod affinity rules.
+# Takes precedence over podAntiAffinity.
+affinity: {}
+
+# -- Enable creating default Pod AntiAffinity rules.
+podAntiAffinity: true
+
+# -- Pod security context.
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# -- Security context.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Pode node selector.
+nodeSelector: {}
+
+# -- Pod tolerations.
+tolerations: []
+
+readinessProbe:
+  # -- readinessProbe type.
+  # Available values: tcpSocket or httpGet or gprc (since Kubernetes v1.24)
+  type: tcpSocket
+  # -- readinessProbe path.
+  # Required then type = httpGet
+  path: ""
+  # -- readinessProbe initialDelaySeconds.
+  initialDelaySeconds: 5
+  # -- readinessProbe periodSeconds.
+  periodSeconds: 15
+  # -- readinessProbe failureThreshold.
+  failureThreshold: 5
+  # -- readinessProbe timeoutSeconds.
+  timeoutSeconds: 5
+
+livenessProbe:
+  # -- livenessProbe type.
+  # Available values: tcpSocket or httpGet or gprc (since Kubernetes v1.24)
+  type: tcpSocket
+  # -- livenessProbe path.
+  # Required then type = httpGet
+  path: ""
+  # -- livenessProbe initialDelaySeconds.
+  initialDelaySeconds: 30
+  # -- livenessProbe periodSeconds.
+  periodSeconds: 15
+  # -- livenessProbe failureThreshold.
+  failureThreshold: 5
+  # -- livenessProbe timeoutSeconds.
+  timeoutSeconds: 5

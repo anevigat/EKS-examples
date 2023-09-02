@@ -1,0 +1,102 @@
+{{- if eq .Values.deployment.type "cronjob" }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  namespace: {{ .Values.global.namespace | default .Values.namespace }}-{{ .Values.global.env | default .Values.env }}
+  name: {{ include "helm-common.fullname" . }}
+  labels:
+    {{- include "helm-common.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | default "* * * * *" | quote}}
+  {{- if .Values.schedule }}
+  suspend: false
+  {{- else }}
+  suspend: true
+  {{- end }}
+  successfulJobsHistoryLimit: {{ .Values.cronjobs.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjobs.failedJobsHistoryLimit }}
+  jobTemplate:
+    ttlSecondsAfterFinished: {{ .Values.cronjobs.ttlSecondsAfterFinished }}
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "helm-common.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ include "helm-common.fullname" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          terminationGracePeriodSeconds: {{ .Values.cronjobs.terminationGracePeriodSeconds }}
+          {{- if .Values.cronjobs.activeDeadlineSeconds }}
+          activeDeadlineSeconds: {{ .Values.cronjobs.activeDeadlineSeconds }}
+          {{- end }}
+          restartPolicy: {{ .Values.cronjobs.restartPolicy }}
+          backoffLimit: {{ .Values.cronjobs.backoffLimit }}
+          containers:
+            - name: {{ include "helm-common.fullname" . }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              ports:
+                - name: {{ .Values.service.name }}
+                  containerPort: {{ .Values.service.port }}
+                  protocol: {{ .Values.service.protocol }}
+              livenessProbe:
+                {{ .Values.livenessProbe.type }}:
+                  {{- if eq .Values.livenessProbe.type "httpGet" }}
+                  path: {{ .Values.livenessProbe.path }}
+                  {{- end }}
+                  port: {{ .Values.service.port }}
+                initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+                periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+                failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+                timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+              readinessProbe:
+                {{ .Values.readinessProbe.type }}:
+                  {{- if eq .Values.readinessProbe.type "httpGet" }}
+                  path: {{ .Values.readinessProbe.path }}
+                  {{- end }}
+                  port: {{ .Values.service.port }}
+                initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+                periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+                failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+                timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              {{- if or .Values.variables .Values.flags .Values.secrets .Values.secretVariables .Values.globalSecrets .Values.globalVariables .Values.apm.enabled }}
+              env:
+                {{- with .Values.flags }}
+                  {{- toYaml . | nindent 14 }}
+                {{- end }}
+                {{- if .Values.apm.enabled }}
+                  {{- include "helm-common.apm" . | trim | nindent 14 }}
+                {{- end }}
+                {{- if .Values.variables }}
+                  {{- include "helm-common.variables" . | trim | nindent 14 }}
+                {{- end }}
+                {{- if .Values.secrets }}
+                  {{- include "helm-common.secrets" . | trim | nindent 14 }}
+                {{- end }}
+                {{- if .Values.secretVariables }}
+                  {{- include "helm-common.secretVariables" . | trim | nindent 14 }}
+                {{- end }}
+                {{- if .Values.globalSecrets }}
+                  {{- include "helm-common.globalSecrets" . | trim | nindent 14 }}
+                {{- end }}
+                {{- if .Values.globalVariables }}
+                  {{- include "helm-common.globalVariables" . | trim | nindent 14 }}
+                {{- end }}
+              {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          affinity:
+            {{- include "helm-common.affinity" . }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+{{- end }}

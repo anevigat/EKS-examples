@@ -1,0 +1,99 @@
+name: 'Deploy an EKS cluster on AWS'
+
+on:
+  push:
+    branches:
+    - eks/**
+    paths:
+      - 'cluster/**'
+  pull_request:
+    branches:
+    - eks/**
+    paths:
+      - 'cluster/**'
+
+jobs:
+  terraform_apply:
+    name: 'Deploy EKS with terraform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      WORKDIR: tf/Clusters/AWS
+      TF_VAR_elastic_agent_fleet_token : ${{ secrets.ELATIC_AGENT_FLEET_TOKEN }}
+      TF_VAR_grafana_agent_password : ${{ secrets.GRAFANA_AGENT_PASSWORD }}
+      TF_VAR_onepassword_connect_credentials : ${{ secrets.ONEPASSWORD_CONNECT_CREDENTIALS }}
+      TF_VAR_onepassword_operator_token : ${{ secrets.ONEPASSWORD_OPERATOR_TOKEN }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Checkout tools repo
+      uses: actions/checkout@v3
+      with:
+        repository: DS/Kubernetes
+        token: ${{ secrets.GIT_TOKEN }}
+        fetch-depth: 0
+        ref: main
+        path: tf
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: v1.3.0
+
+    - name: Set region and cluster name on pull_request
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "TF_VAR_region=$(echo ${{ github.base_ref }} | cut -d / -f 2)" >> $GITHUB_ENV
+        echo "TF_VAR_cluster_name=$(echo ${{ github.base_ref }} | cut -d / -f 3)" >> $GITHUB_ENV
+
+    - name: Set region and cluster name on push
+      if: github.event_name == 'push'
+      run: |
+        echo "TF_VAR_region=$(echo ${GITHUB_REF##*eks/} | cut -d / -f 1)" >> $GITHUB_ENV
+        echo "TF_VAR_cluster_name=$(echo ${GITHUB_REF##*eks/} | cut -d / -f 2)" >> $GITHUB_ENV
+
+    - name: Working environment
+      run: |
+        echo "# Deploying EKS cluster"  >> $GITHUB_STEP_SUMMARY
+        echo "## Environment:"  >> $GITHUB_STEP_SUMMARY
+        echo "- AWS region: ${{ env.TF_VAR_region }}" >> $GITHUB_STEP_SUMMARY
+        echo "- EKS cluster: ${{ env.TF_VAR_cluster_name }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.TF_VAR_region }}
+
+    - name: Terraform Init
+      working-directory: ${{ env.WORKDIR }}
+      run: |
+        echo "## Terraform Init" >> $GITHUB_STEP_SUMMARY
+        echo "***terraform init -backend-config 'key=eks/${{ env.TF_VAR_region }}-${{ env.TF_VAR_cluster_name }}/terraform.tfstate'***" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        terraform init -backend-config 'key=eks/${{ env.TF_VAR_region }}-${{ env.TF_VAR_cluster_name }}/terraform.tfstate' -no-color >> $GITHUB_STEP_SUMMARY 2>&1
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Terraform Plan
+      working-directory: ${{ env.WORKDIR }}
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "## Terraform Plan" >> $GITHUB_STEP_SUMMARY
+        echo "***terraform plan -var-file=cluster_deploy.tfvars***" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        terraform plan -var-file=../../../cluster/cluster_deploy.tfvars -no-color >> $GITHUB_STEP_SUMMARY 2>&1
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Terraform Apply
+      working-directory: ${{ env.WORKDIR }}
+      if: github.event_name == 'push'
+      run: |
+        echo "## Terraform Apply" >> $GITHUB_STEP_SUMMARY
+        echo "***terraform apply -auto-approve -var-file=cluster_deploy.tfvars***" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        terraform apply -auto-approve -var-file=../../../cluster/cluster_deploy.tfvars -no-color #>> $GITHUB_STEP_SUMMARY 2>&1
+        echo '```' >> $GITHUB_STEP_SUMMARY

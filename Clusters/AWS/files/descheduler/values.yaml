@@ -1,0 +1,56 @@
+# Default values for descheduler.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# CronJob or Deployment
+kind: Deployment
+
+#resources:
+#  requests:
+#    cpu: 500m
+#    memory: 256Mi
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Required when running as a Deployment
+deschedulingInterval: 5m
+
+cmdOptions:
+  v: 3
+  # evict-local-storage-pods:
+  # max-pods-to-evict-per-node: 10
+  # node-selector: "key1=value1,key2=value2"
+
+deschedulerPolicy:
+  strategies:
+    RemoveDuplicates:
+      enabled: true
+    RemovePodsViolatingNodeTaints:
+      enabled: true
+    RemovePodsViolatingNodeAffinity:
+      enabled: true
+      params:
+        nodeAffinityType:
+        - requiredDuringSchedulingIgnoredDuringExecution
+    RemovePodsViolatingInterPodAntiAffinity:
+      enabled: true
+    LowNodeUtilization:
+      enabled: true
+      params:
+        nodeResourceUtilizationThresholds:
+          thresholds:
+            cpu: 60
+            memory: 60
+            pods: 60
+          targetThresholds:
+            cpu: 75
+            memory: 75
+            pods: 75
+    PodLifeTime:
+      enabled: true
+      params:
+        podLifeTime:
+          maxPodLifeTimeSeconds: 60
+          podStatusPhases:
+          - "Pending"

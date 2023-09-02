@@ -1,0 +1,91 @@
+name: 'VERSION HELM CHART'
+
+on:
+  workflow_dispatch:
+    inputs:
+      patch:
+        type: boolean
+        description: Bump patch and push helm chart
+        required: false
+  pull_request:
+    branches:
+    - main
+    paths:
+      - 'Charts/**'
+  push:
+    branches:
+    - main
+    paths:
+      - 'Charts/**'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+jobs:
+  bumpPatch:
+    name: 'Bump patch, Package and Push'
+    if: github.event_name == 'pull_request' || ( github.event.inputs.patch == 'True' && github.ref_name != 'main' )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Bump minor version, Package and Push changed charts
+      env:
+        GITHUB_ENV: true
+        BUMP: patch
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: ./bump.sh
+
+  bumpMinor:
+    name: 'Bump, Tag, Package and Push'
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      INDEX: nexus-services
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Bump minor version, Package and Push changed charts
+      env:
+        GITHUB_ENV: true
+        BUMP: minor
+        GITPUSH: true
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        EC_PUSH: true
+        EC_HOST: ${{ vars.EC_HOST }}
+        INDEX: ${{ env.INDEX }}
+        EC_API_KEY: ${{ secrets.EC_API_KEY }}
+      run: ./bump.sh
