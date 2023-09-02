@@ -9,6 +9,10 @@ fullnameOverride: ""
 # -- Namespace to install the release
 namespace: ""
 
+# -- Name of the environment to pass to the application.
+environments:
+  test: testing
+  main: production
 
 # -- Name of the 1password vault without the environment.
 onepassword:

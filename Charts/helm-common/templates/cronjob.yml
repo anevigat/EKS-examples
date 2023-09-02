@@ -65,28 +65,16 @@ spec:
                 timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
-              {{- if or .Values.variables .Values.flags .Values.secrets .Values.secretVariables .Values.globalSecrets .Values.globalVariables .Values.apm.enabled }}
+              {{- if or .Values.variables .Values.flags .Values.secrets }}
               env:
                 {{- with .Values.flags }}
                   {{- toYaml . | nindent 14 }}
-                {{- end }}
-                {{- if .Values.apm.enabled }}
-                  {{- include "helm-common.apm" . | trim | nindent 14 }}
                 {{- end }}
                 {{- if .Values.variables }}
                   {{- include "helm-common.variables" . | trim | nindent 14 }}
                 {{- end }}
                 {{- if .Values.secrets }}
                   {{- include "helm-common.secrets" . | trim | nindent 14 }}
-                {{- end }}
-                {{- if .Values.secretVariables }}
-                  {{- include "helm-common.secretVariables" . | trim | nindent 14 }}
-                {{- end }}
-                {{- if .Values.globalSecrets }}
-                  {{- include "helm-common.globalSecrets" . | trim | nindent 14 }}
-                {{- end }}
-                {{- if .Values.globalVariables }}
-                  {{- include "helm-common.globalVariables" . | trim | nindent 14 }}
                 {{- end }}
               {{- end }}
           {{- with .Values.nodeSelector }}
