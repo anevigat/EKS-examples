@@ -69,4 +69,8 @@ module "eks" {
       ]
     }
   ]
+
+  eks_managed_node_group_defaults = {
+    ami_release_version = data.aws_ssm_parameter.latest_ami_release_version.value
+  }
 }
